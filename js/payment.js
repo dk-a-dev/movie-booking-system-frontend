@@ -7,6 +7,34 @@ function initializePayment() {
     
     displayTicketPreview(bookingDetails);
     displayBookingSummary(bookingDetails);
+
+    // Add input listeners for payment form validation
+    const cardNumber = document.getElementById('cardNumber');
+    const expiryDate = document.getElementById('expiryDate');
+    const cvv = document.getElementById('cvv');
+    const upiId = document.getElementById('upiId');
+
+    cardNumber.addEventListener('input', formatCardNumber);
+    expiryDate.addEventListener('input', formatExpiryDate);
+    cardNumber.addEventListener('blur', validateCardNumber);
+    expiryDate.addEventListener('blur', validateExpiryDate);
+    cvv.addEventListener('blur', validateCVV);
+    upiId.addEventListener('blur', validateUPIId);
+
+    // Add input event listeners for real-time validation
+    document.querySelector('.pay-now-btn').disabled = true;
+    
+    const inputs = {
+        card: ['cardNumber', 'expiryDate', 'cvv', 'cardName'],
+        upi: ['upiId']
+    };
+
+    Object.entries(inputs).forEach(([method, fields]) => {
+        fields.forEach(field => {
+            const input = document.getElementById(field);
+            input.addEventListener('input', () => validateForm(method));
+        });
+    });
 }
 
 function displayTicketPreview(booking) {
@@ -87,6 +115,171 @@ function selectPaymentMethod(method) {
     document.getElementById('upiPayment').style.display = method === 'upi' ? 'block' : 'none';
 }
 
+const VALID_UPI_HANDLES = ['sbi', 'icici', 'ybl', 'bob', 'axis', 'hdfc', 'kotak', 'paytm'];
+let paymentAttempts = 0;
+
+function validateUpiId(upiId) {
+    const upiRegex = /^([0-9]{10}|[a-zA-Z0-9._-]+)@([a-zA-Z]+)$/;
+    if (!upiRegex.test(upiId)) {
+        showToast('Invalid UPI ID format', 'error');
+        return false;
+    }
+
+    const [, , handle] = upiId.match(upiRegex);
+    if (!VALID_UPI_HANDLES.includes(handle.toLowerCase())) {
+        showToast(`Invalid UPI handle. Use: ${VALID_UPI_HANDLES.join(', ')}`, 'error');
+        return false;
+    }
+    return true;
+}
+
+function detectCardType(cardNumber) {
+    const patterns = {
+        VISA: /^4[0-9]{12}(?:[0-9]{3})?$/,
+        MASTERCARD: /^5[1-5][0-9]{14}$/,
+        RUPAY: /^6[0-9]{15}$/
+    };
+
+    for (const [type, pattern] of Object.entries(patterns)) {
+        if (pattern.test(cardNumber)) return type;
+    }
+    return null;
+}
+
+function updateCardTypeUI(cardNumber) {
+    const cardType = detectCardType(cardNumber);
+    const cardLabel = document.querySelector('.card-type');
+    if (cardLabel) {
+        cardLabel.textContent = cardType || 'Invalid Card';
+        cardLabel.className = `card-type ${cardType ? 'valid' : 'invalid'}`;
+    }
+}
+
+function formatCardNumber(e) {
+    // Only allow numbers and limit to 16 digits
+    let value = e.target.value.replace(/\D/g, '').substring(0, 16);
+    e.target.value = value;
+    
+    // Update card type UI
+    const cardType = detectCardType(value);
+    updateCardTypeUI(value);
+
+    // Show visual feedback when complete
+    e.target.classList.toggle('complete', value.length === 16);
+}
+
+function formatExpiryDate(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2, 4);
+    }
+    e.target.value = value;
+    validateExpiryDate(e);
+}
+
+function validateCardNumber(e) {
+    const cardNumber = e.target.value;
+    const cardType = detectCardType(cardNumber);
+    let errorMessage = '';
+    
+    const isValid = cardNumber.length === 16 && cardType;
+    toggleFieldValidation(e.target, isValid, errorMessage);
+    e.target.classList.toggle('complete', isValid);
+    validateForm('card');
+    return isValid;
+}
+
+function validateExpiryDate(e) {
+    const value = e.target.value;
+    const [month, year] = value.split('/').map(n => parseInt(n));
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    let errorMessage = '';
+
+    const isValid = /^\d{2}\/\d{2}$/.test(value) && 
+                   month >= 1 && month <= 12 && 
+                   (year > currentYear || (year === currentYear && month >= currentMonth));
+
+    toggleFieldValidation(e.target, isValid, errorMessage);
+    e.target.classList.toggle('complete', isValid);
+    validateForm('card');
+    return isValid;
+}
+
+function validateCVV(e) {
+    const value = e.target.value;
+    let errorMessage = '';
+    const isValid = /^\d{3}$/.test(value);
+
+    toggleFieldValidation(e.target, isValid, errorMessage);
+    e.target.classList.toggle('complete', isValid);
+    validateForm('card');
+    return isValid;
+}
+
+function validateUPIId(e) {
+    const value = e.target.value;
+    const upiRegex = /^([0-9]{10}|[a-zA-Z0-9._-]+)@([a-zA-Z]+)$/;
+    let errorMessage = '';
+    const [, , handle] = (value.match(upiRegex) || []);
+    const isValid = upiRegex.test(value) && VALID_UPI_HANDLES.includes(handle?.toLowerCase());
+
+    toggleFieldValidation(e.target, isValid, errorMessage);
+    e.target.classList.toggle('complete', isValid);
+    validateForm('upi');
+    return isValid;
+}
+
+function toggleFieldValidation(element, isValid, errorMessage) {
+    const inputGroup = element.closest('.form-group');
+    const existingError = inputGroup.querySelector('.error-message');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    element.classList.toggle('invalid', !isValid);
+    
+    if (!isValid) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'error-message';
+        errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMessage}`;
+        inputGroup.appendChild(errorElement);
+    }
+}
+
+function validateForm(method) {
+    const btn = document.querySelector('.pay-now-btn');
+    let isValid = true;
+
+    if (method === 'card') {
+        const cardNumber = document.getElementById('cardNumber');
+        const expiryDate = document.getElementById('expiryDate');
+        const cvv = document.getElementById('cvv');
+
+        // Remove cardName validation, only check other fields
+        isValid = cardNumber.value.replace(/\s/g, '').length === 16 &&
+                 /^\d{2}\/\d{2}$/.test(expiryDate.value) &&
+                 /^\d{3}$/.test(cvv.value);
+
+        // Add visual feedback for valid fields
+        if (isValid) {
+            [cardNumber, expiryDate, cvv].forEach(input => {
+                input.classList.add('complete');
+            });
+        }
+    } else if (method === 'upi') {
+        const upiId = document.getElementById('upiId');
+        const upiRegex = /^([0-9]{10}|[a-zA-Z0-9._-]+)@([a-zA-Z]+)$/;
+        const [, , handle] = (upiId.value.match(upiRegex) || []);
+        isValid = upiRegex.test(upiId.value) && VALID_UPI_HANDLES.includes(handle?.toLowerCase());
+    }
+
+    btn.disabled = !isValid;
+    return isValid;
+}
+
 function processPayment() {
     const selectedMethod = document.querySelector('.payment-option.selected');
     if (!selectedMethod) {
@@ -94,36 +287,71 @@ function processPayment() {
         return;
     }
 
+    const method = selectedMethod.dataset.method;
+    if (!validateForm(method)) {
+        showToast('Please fix all errors before proceeding', 'error');
+        return;
+    }
+
+    paymentAttempts++;
+    
     // Show loading animation
     const loader = document.createElement('div');
     loader.className = 'payment-loader';
     loader.innerHTML = '<div class="loader"></div><div>Processing payment...</div>';
     document.body.appendChild(loader);
-    
+
+    // Random failure with 20% probability
+    const shouldFail = Math.random() < 0.2;  // 20% chance of failure
+
+    setTimeout(() => {
+        loader.remove();
+        if (shouldFail) {
+            showToast('Transaction failed! Please try again.', 'error');
+            showPaymentFailure();
+        } else {
+            const confirmedBooking = createConfirmedBooking();
+            showPaymentSuccess(confirmedBooking);
+        }
+    }, 2000);
+}
+
+function showPaymentFailure() {
+    const container = document.querySelector('.payment-container');
+    container.innerHTML = `
+        <div class="failure-container">
+            <div class="failure-animation">
+                <svg class="crossmark" viewBox="0 0 52 52">
+                    <circle class="crossmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="crossmark-x" d="M16 16 36 36 M36 16 16 36"/>
+                </svg>
+            </div>
+            <h2>Payment Failed</h2>
+            <p>Transaction could not be completed. Please try again.</p>
+            <div class="countdown">Redirecting in <span id="countdown">10</span></div>
+        </div>
+    `;
+
+    let seconds = 10;
+    const countdownEl = document.getElementById('countdown');
+    const interval = setInterval(() => {
+        seconds--;
+        countdownEl.textContent = seconds;
+        if (seconds === 0) {
+            clearInterval(interval);
+            window.location.reload();
+        }
+    }, 1000);
+}
+
+function createConfirmedBooking() {
     const booking = JSON.parse(localStorage.getItem('bookingDetails'));
-    const confirmedBooking = {
+    return {
         ...booking,
         bookingId: generateBookingId(),
         status: 'confirmed',
         paymentDate: new Date().toISOString()
     };
-    
-    // Simulate payment processing
-    setTimeout(() => {
-        try {
-            localStorage.setItem('confirmedBooking', JSON.stringify(confirmedBooking));
-            loader.remove();
-            showPaymentSuccess(confirmedBooking);
-        } catch (error) {
-            loader.remove();
-            showToast('Payment failed. Please try again.', 'error');
-        }
-    }, 2000);
-
-    // After successful payment
-    document.querySelector('.payment-section').style.opacity = '0.5';
-    document.querySelector('.payment-form').style.pointerEvents = 'none';
-    showPaymentSuccess(confirmedBooking);
 }
 
 function showPaymentSuccess(booking) {
@@ -186,7 +414,20 @@ function generateBookingId() {
     return 'BK' + Date.now().toString(36).toUpperCase();
 }
 
-function showToast(message, type = 'success') {
+// Debounce function to limit toast notifications
+const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+};
+
+const showToastDebounced = debounce((message, type) => {
+    // Remove any existing toasts first
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
@@ -195,11 +436,19 @@ function showToast(message, type = 'success') {
     `;
     document.body.appendChild(toast);
     
-    setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    // Show toast
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    });
+}, 300);
+
+// Replace all showToast calls with showToastDebounced
+function showToast(message, type = 'success') {
+    showToastDebounced(message, type);
 }
 
 function downloadTicket() {
