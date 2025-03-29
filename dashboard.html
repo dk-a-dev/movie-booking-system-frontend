@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Booking - Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Movie Booking System</div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search movies...">
+            <button onclick="searchMovies()">Search</button>
+        </div>
+        <div class="nav-user">
+            <span id="username"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <main>
+        <section id="nowShowingSection">
+            <h2 class="header-title">Now Showing</h2>
+            <div id="nowShowingGrid" class="movies-grid"></div>
+        </section>
+
+        <section id="upcomingSection">
+            <h2 class="header-title">Coming Soon</h2>
+            <div id="upcomingGrid" class="movies-grid"></div>
+        </section>
+
+        <section id="recommendedSection">
+            <h2 class="header-title">Top Rated</h2>
+            <div id="recommendedGrid" class="movies-grid"></div>
+        </section>
+    </main>
+
+    <script src="js/data.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

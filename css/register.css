@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+.register-title {
+    color: #ff4343;
+    font-size: 2em;
+    margin-bottom: 30px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-container {
+    background: rgba(43, 43, 43, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: formAppear 0.5s ease-out;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    color: #fff;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    background: rgba(26, 26, 26, 0.8);
+    border: 2px solid rgba(255, 67, 67, 0.3);
+    border-radius: 4px;
+    padding: 12px;
+    color: #fff;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus + label,
+.form-group input:valid + label {
+    color: #ff4343;
+}
+
+.form-group input:focus {
+    border-color: #ff4343;
+    box-shadow: 0 0 10px rgba(255, 67, 67, 0.2);
+}
+
+.validation-feedback {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ff4343;
+    display: none;
+}
+
+.form-group.valid .validation-feedback {
+    display: block;
+    color: #4CAF50;
+}
+
+.form-group.error .validation-feedback {
+    display: block;
+    color: #ff4343;
+}
+
+.password-strength {
+    height: 3px;
+    background: #444;
+    margin-top: 8px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.strength-text {
+    font-size: 12px;
+    margin-top: 5px;
+    color: #aaa;
+    text-align: right;
+}
+
+.login-link {
+    color: #ff4343;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.login-link:hover {
+    color: #ff8a8a;
+    text-decoration: underline;
+}
+
+button[type="submit"] {
+    margin-top: 20px;
+    background: linear-gradient(45deg, #ff4343, #ff8a8a);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 67, 67, 0.4);
+}

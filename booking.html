@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Movie Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/booking.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Movie Booking System</div>
+        <div class="nav-items">
+            <span id="username"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="booking-container">
+            <div class="movie-info-section">
+                <div class="movie-poster">
+                    <img id="moviePoster" src="" alt="Movie Poster">
+                </div>
+                <div class="movie-details">
+                    <h2 id="movieTitle"></h2>
+                    <div class="movie-meta">
+                        <div id="movieGenres" class="movie-genres"></div>
+                        <div id="movieRating" class="rating"></div>
+                    </div>
+                    <p id="movieOverview" class="overview"></p>
+                </div>
+            </div>
+
+            <div class="booking-steps">
+                <div class="step-section">
+                    <h3>Select Date</h3>
+                    <div id="datePicker" class="date-picker"></div>
+                </div>
+
+                <div id="theaterSelect" class="step-section">
+                    <h3>Select Theater</h3>
+                    <div id="theaterList" class="theater-list"></div>
+                </div>
+
+                <div id="showTimes" class="step-section">
+                    <h3>Select Show Time</h3>
+                    <div class="time-slots"></div>
+                </div>
+
+                <div id="seatsSection" class="step-section">
+                    <h3>Select Seats</h3>
+                    
+                    <div class="people-selector">
+                        <span>Number of seats:</span>
+                        <div class="quantity-selector">
+                            <button class="quantity-btn" onclick="updatePeopleCount(-1)">-</button>
+                            <span id="peopleCount" class="quantity-display">1</span>
+                            <button class="quantity-btn" onclick="updatePeopleCount(1)">+</button>
+                        </div>
+                    </div>
+                
+                    <div class="seats-container">
+                        <div class="screen">SCREEN</div>
+                        <div class="seats-grid-container">
+                            <div class="column-labels"></div>
+                            <div id="seatsGrid" class="seats-grid"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="seat-legend">
+                        <div class="legend-item">
+                            <div class="seat premium"></div>
+                            <span>Premium (₹350)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="seat standard"></div>
+                            <span>Standard (₹250)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="seat booked"></div>
+                            <span>Booked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ticketSummary" class="ticket-preview">
+                   
+                </div>
+                
+
+                <div id="bookingSummary" class="booking-summary">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/booking.js"></script>
+</body>
+</html>
